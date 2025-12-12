@@ -290,20 +290,13 @@ If you encounter any issues, feel free to open an issue on GitHub or reach out t
 If you find this work useful, please consider citing:
 
 ```bibtex
-@article{comet2025behavior1k,
-  title={Comet Submission for BEHAVIOR-1K Challenge},
-  author={Comet Team},
-  url={https://github.com/mli0603/comet-2025-b1k-challenge},
-  year={2025}
+@article{bai2025openpicometcompetitionsolution,
+  title={Openpi Comet: Competition Solution For 2025 BEHAVIOR Challenge}, 
+  author={Junjie Bai and Yu-Wei Chao and Qizhi Chen and Jinwei Gu and Moo Jin Kim and Zhaoshuo Li and Xuan Li and Tsung-Yi Lin and Ming-Yu Liu and Nic Ma and Kaichun Mo and Delin Qu and Shangkun Sun and Hongchi Xia and Fangyin Wei and Xiaohui Zeng},
+  year={2025},
+  eprint={2512.10071},
+  archivePrefix={arXiv},
+  primaryClass={cs.RO},
+  url={https://arxiv.org/abs/2512.10071}, 
 }
 ```
-
-<!-- ```bibtex
-@article{comet2025behavior1k,
-  title={Comet Submission for BEHAVIOR-1K Challenge},
-  author={Comet Team},
-  journal={arXiv preprint arXiv:2512.06000},
-  url={https://github.com/mli0603/comet-2025-b1k-challenge},
-  year={2025}
-}
-``` -->
