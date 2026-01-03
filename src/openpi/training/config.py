@@ -559,9 +559,6 @@ class TrainConfig:
     # Base directory for config assets (e.g., norm stats).
     assets_base_dir: str = "./outputs/assets/train"
 
-    # Special assets base directory for B1K data.
-    b1k_assets_dir: str | None = None
-
     # Base directory for checkpoints.
     checkpoint_base_dir: str = "./checkpoints"
 
@@ -612,9 +609,6 @@ class TrainConfig:
     @property
     def assets_dirs(self) -> pathlib.Path:
         """Get the assets directory for this config."""
-        if self.b1k_assets_dir and pathlib.Path(self.b1k_assets_dir).exists():
-            logging.info(f"Using B1K assets directory: {self.b1k_assets_dir}")
-            return pathlib.Path(self.b1k_assets_dir).resolve()
         return (pathlib.Path(self.assets_base_dir) / self.name).resolve()
 
     @property
@@ -708,82 +702,6 @@ _CONFIGS = [
     ),
     # 1. pretrain configs
     TrainConfig(
-        name="pi05_b1k-pt7_cs32_bs64_lr2.5e-5_step50k",
-        exp_name="openpi",
-        project_name="B1K",
-        model=pi0_config.Pi0Config(pi05=True, action_horizon=32),
-        data=LeRobotB1KDataConfig(
-            repo_id="behavior-1k/2025-challenge-demos",
-            base_config=DataConfig(
-                prompt_from_task=True,
-                episodes_index=list(range(200)),
-                behavior_dataset_root="../DATASETS/behavior/2025-challenge-demos",
-                tasks=[
-                    "bringing_water",
-                    "cook_hot_dogs",
-                    "make_microwave_popcorn",
-                    "picking_up_trash",
-                    "putting_shoes_on_rack",
-                    "turning_on_radio",
-                    "wash_a_baseball_cap",
-                ],
-                fine_grained_level=0,  # 0, 1, 2
-            ),
-        ),
-        weight_loader=weight_loaders.CheckpointWeightLoader(
-            "gs://openpi-assets/checkpoints/pi05_base/params"
-        ),
-        num_train_steps=50_000,
-        lr_schedule=_optimizer.CosineDecaySchedule(
-            peak_lr=2.5e-5,
-            decay_steps=50_000,
-        ),
-        freeze_filter=pi0_config.Pi0Config(pi05=True, action_horizon=32).get_freeze_filter(),
-        ema_decay=None,
-        checkpoint_base_dir=".",
-        num_workers=8,
-        batch_size=8 * 32,
-    ),
-    TrainConfig(
-        name="pi05_b1k-pt10_cs32_bs64_lr2.5e-5_step50k",
-        exp_name="openpi",
-        project_name="B1K",
-        model=pi0_config.Pi0Config(pi05=True, action_horizon=32),
-        data=LeRobotB1KDataConfig(
-            repo_id="behavior-1k/2025-challenge-demos",
-            base_config=DataConfig(
-                prompt_from_task=True,
-                behavior_dataset_root="../DATASETS/behavior/2025-challenge-demos",
-                tasks=[
-                    "bringing_water",
-                    "cook_hot_dogs",
-                    "make_microwave_popcorn",
-                    "picking_up_trash",
-                    "putting_shoes_on_rack",
-                    "setting_the_fire",
-                    "turning_on_radio",
-                    "wash_a_baseball_cap",
-                    "hanging_pictures",
-                    "moving_boxes_to_storage",
-                ],
-                fine_grained_level=0,  # 0, 1, 2
-            ),
-        ),
-        weight_loader=weight_loaders.CheckpointWeightLoader(
-            "gs://openpi-assets/checkpoints/pi05_base/params"
-        ),
-        num_train_steps=50_000,
-        lr_schedule=_optimizer.CosineDecaySchedule(
-            peak_lr=2.5e-5,
-            decay_steps=50_000,
-        ),
-        freeze_filter=pi0_config.Pi0Config(pi05=True, action_horizon=32).get_freeze_filter(),
-        ema_decay=None,
-        checkpoint_base_dir=".",
-        num_workers=8,
-        batch_size=8 * 32,
-    ),
-    TrainConfig(
         name="pi05_b1k-pt12_cs32_bs64_lr2.5e-5_step50k",
         exp_name="openpi",
         project_name="B1K",
@@ -837,58 +755,6 @@ _CONFIGS = [
                 prompt_from_task=True,
                 episodes_index=list(range(200)),
                 behavior_dataset_root="../DATASETS/behavior/2025-challenge-demos",
-                tasks=[
-                    "turning_on_radio",
-                    "picking_up_trash",
-                    "hiding_Easter_eggs",
-                    "wash_a_baseball_cap",
-                    "hanging_pictures",
-                    "attach_a_camera_to_a_tripod",
-                    "make_microwave_popcorn",
-                    "bringing_water",
-                    "tidying_bedroom",
-                    "putting_shoes_on_rack",
-                    "setting_the_fire",
-                    "cook_hot_dogs",
-                    "freeze_pies",
-                    "putting_away_Halloween_decorations",
-                    "cleaning_up_plates_and_food",
-                    "can_meat",
-                    "setting_mousetraps",
-                    "picking_up_toys",
-                    "rearranging_kitchen_furniture",
-                    "putting_up_Christmas_decorations_inside",
-                    "set_up_a_coffee_station_in_your_kitchen",
-                    "putting_dishes_away_after_cleaning",
-                    "preparing_lunch_box",
-                    "loading_the_car",
-                    "carrying_in_groceries",
-                    "bringing_in_wood",
-                    "moving_boxes_to_storage",
-                    "outfit_a_basic_toolbox",
-                    "sorting_vegetables",
-                    "collecting_childrens_toys",
-                    "boxing_books_up_for_storage",
-                    "storing_food",
-                    "clearing_food_from_table_into_fridge",
-                    "assembling_gift_baskets",
-                    "sorting_household_items",
-                    "getting_organized_for_work",
-                    "clean_up_your_desk",
-                    "clean_boxing_gloves",
-                    "wash_dog_toys",
-                    "clean_a_patio",
-                    "clean_a_trumpet",
-                    "spraying_for_bugs",
-                    "spraying_fruit_trees",
-                    "cook_cabbage",
-                    "chop_an_onion",
-                    "slicing_vegetables",
-                    "chopping_wood",
-                    "cook_bacon",
-                    "canning_food",
-                    "make_pizza",
-                ],
                 fine_grained_level=0,  # 0, 1, 2
             ),
         ),
@@ -922,7 +788,7 @@ _CONFIGS = [
                 fine_grained_level=0,  # 0, 1, 2
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("path_to_your_pretrained_checkpoint"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("sunshk/openpi_comet/pi05-b1kpt50-cs32"), # hf download in advance
         num_train_steps=20_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             peak_lr=2.5e-6,
@@ -934,7 +800,6 @@ _CONFIGS = [
         num_workers=8,
         batch_size=8 * 32,
     ),
-    # ... add more SFT configs here ...
     # 3. RFT Configs
     TrainConfig(
         name="pi05_b1k-turning_on_radio_lr2.5e-6_step20k_rft",
@@ -962,84 +827,43 @@ _CONFIGS = [
         num_workers=8,
         batch_size=8 * 32,
     ),
+    # 4. Multi-dataset Training Configs
     TrainConfig(
-        name="pi05_b1k-pt50_cs32_bs64_lr2.5e-5_step50k_rft",
-        exp_name="openpi",
-        project_name="B1K",
-        model=pi0_config.Pi0Config(pi05=True, action_horizon=32),
-        data=LeRobotB1KDataConfig(
+    name="pi05-b1k-demo0_6-comet0_4-step20k",
+    exp_name="openpi",
+    project_name="B1K",
+    model=pi0_config.Pi0Config(pi05=True, action_horizon=32),
+    sample_weights=[0.6, 0.4],
+    data=[
+        LeRobotB1KDataConfig(
             repo_id="behavior-1k/2025-challenge-demos",
             base_config=DataConfig(
                 prompt_from_task=True,
-                episodes_index=list(range(200)),
-                behavior_dataset_root="../DATASETS/behavior/2025-challenge-demos-rft",
-                tasks=[
-                    "turning_on_radio",
-                    "picking_up_trash",
-                    "hiding_Easter_eggs",
-                    "wash_a_baseball_cap",
-                    "hanging_pictures",
-                    "attach_a_camera_to_a_tripod",
-                    "make_microwave_popcorn",
-                    "bringing_water",
-                    "tidying_bedroom",
-                    "putting_shoes_on_rack",
-                    "setting_the_fire",
-                    "cook_hot_dogs",
-                    "freeze_pies",
-                    "putting_away_Halloween_decorations",
-                    "cleaning_up_plates_and_food",
-                    "can_meat",
-                    "setting_mousetraps",
-                    "picking_up_toys",
-                    "rearranging_kitchen_furniture",
-                    "putting_up_Christmas_decorations_inside",
-                    "set_up_a_coffee_station_in_your_kitchen",
-                    "putting_dishes_away_after_cleaning",
-                    "preparing_lunch_box",
-                    "loading_the_car",
-                    "carrying_in_groceries",
-                    "bringing_in_wood",
-                    "moving_boxes_to_storage",
-                    "outfit_a_basic_toolbox",
-                    "sorting_vegetables",
-                    "collecting_childrens_toys",
-                    "boxing_books_up_for_storage",
-                    "storing_food",
-                    "clearing_food_from_table_into_fridge",
-                    "assembling_gift_baskets",
-                    "sorting_household_items",
-                    "getting_organized_for_work",
-                    "clean_up_your_desk",
-                    "clean_boxing_gloves",
-                    "wash_dog_toys",
-                    "clean_a_patio",
-                    "clean_a_trumpet",
-                    "spraying_for_bugs",
-                    "spraying_fruit_trees",
-                    "cook_cabbage",
-                    "chop_an_onion",
-                    "slicing_vegetables",
-                    "chopping_wood",
-                    "cook_bacon",
-                    "canning_food",
-                    "make_pizza",
-                ],
+                behavior_dataset_root="../DATASETS/behavior/2025-challenge-demos",
                 fine_grained_level=0,  # 0, 1, 2
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("path_to_your_pretrained_checkpoint"),
-        num_train_steps=50_000,
-        lr_schedule=_optimizer.CosineDecaySchedule(
-            peak_lr=2.5e-5,
-            decay_steps=50_000,
+        LeRobotB1KDataConfig(
+            repo_id="rft-debug/comet-val-v2",
+            base_config=DataConfig(
+                prompt_from_task=True,
+                behavior_dataset_root="../DATASETS/behavior/comet-1.5k",
+                fine_grained_level=0,  # 0, 1, 2
+            ),
         ),
-        freeze_filter=pi0_config.Pi0Config(pi05=True, action_horizon=32).get_freeze_filter(),
-        ema_decay=None,
-        assets_base_dir="./outputs/assets",
-        checkpoint_base_dir=".",
-        num_workers=8,
-        batch_size=8 * 32,
+    ],
+    weight_loader=weight_loaders.CheckpointWeightLoader("sunshk/openpi_comet/pi05-b1kpt50-cs32"), # hf download in advance
+    num_train_steps=20_000,
+    s=_optimizer.CosineDecaySchedule(
+        peak_lr=1e-6,
+        decay_steps=20_000,
+    ),
+    freeze_filter=pi0_config.Pi0Config(pi05=True, action_horizon=32).get_freeze_filter(),
+    ema_decay=None,
+    assets_base_dir="./outputs/assets",
+    checkpoint_base_dir=".",
+    num_workers=8,
+    batch_size=8 * 32,
     ),
 ]
 

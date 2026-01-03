@@ -7,16 +7,15 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Dict
-from typing import Dict as _Dict
-from typing import List, Tuple, cast
+from typing import List, Tuple, cast, Dict
 
 import numpy as np
 import pandas as pd
 
 # Constants
-TRIM_FRAMES = 20
+TRIM_FRAMES = 15
 DEFAULT_FPS = 30
+
 
 def load_task_mapping(tasks_jsonl_path: str) -> Dict[str, int]:
     task_name_to_index: Dict[str, int] = {}
@@ -131,7 +130,9 @@ def copy_meta(template_root: str, out_root: str, task_index: int, episode_id: in
     copy_file_to_fs(src, dst)
 
 
-def copy_and_update_annotation(template_root: str, out_root: str, task_index: int, episode_id: int, num_frames: int) -> None:
+def copy_and_update_annotation(
+    template_root: str, out_root: str, task_index: int, episode_id: int, num_frames: int
+) -> None:
     task_id_str = f"task-{task_index:04d}"
     # Find the first available annotation json in the task directory
     src_dir = os.path.join(template_root, "annotations", task_id_str)
@@ -173,7 +174,12 @@ def trim_and_copy_videos(
     mapping = {
         "head.mp4": ("videos", task_id_str, "observation.images.rgb.head", f"episode_{episode_id:08d}.mp4"),
         "left_wrist.mp4": ("videos", task_id_str, "observation.images.rgb.left_wrist", f"episode_{episode_id:08d}.mp4"),
-        "right_wrist.mp4": ("videos", task_id_str, "observation.images.rgb.right_wrist", f"episode_{episode_id:08d}.mp4"),
+        "right_wrist.mp4": (
+            "videos",
+            task_id_str,
+            "observation.images.rgb.right_wrist",
+            f"episode_{episode_id:08d}.mp4",
+        ),
     }
     # Compute exact frame slice [start_idx, end_idx], inclusive, then reset PTS.
     start_idx = trim_frames
@@ -231,7 +237,9 @@ def _run_ffmpeg_trim(src: str, dst: str, vf_filter: str) -> bool:
         # Using check=True to raise on failure
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
-    except Exception:
+    except Exception as e:
+        print(f"CRITICAL: ffmpeg trim failed for {src}.", flush=True)
+        print(f"Error details: {e}", flush=True)
         return False
 
 
@@ -254,37 +262,23 @@ def all_outputs_exist(out_root: str, task_index: int, episode_id: int) -> bool:
 
 
 def process_job(
-    job: _Dict[str, object],
+    job: Dict[str, object],
     *,
     final_out_root: str,
     template_root: str,
-    task_name_to_index: _Dict[str, int],
-    skip_existing: bool,
 ) -> Tuple[str, int, str]:
-    # removed set_s3_backend
-
     rel = cast(str, job["rel"])
     episode_id = int(cast(int, job["episode_id"]))
-    exp_dir = cast(str, job["exp_dir"])
     run_dir = cast(str, job["run_dir"])
     npz_path = cast(str, job["npz_path"])
 
     # Derive task_index
-    task_name = read_task_name_from_exp(exp_dir)
-    if task_name is None or task_name not in task_name_to_index:
-        print(f"[skip_no_task] {rel} -> (unknown) episode_id={episode_id:08d}", flush=True)
-        return ("skip_no_task", episode_id, rel)
-    task_index = task_name_to_index[task_name]
+    task_index = episode_id // 10000
     task_id_str = f"task-{task_index:04d}"
 
     # Prepare output dirs
     data_dir = os.path.join(final_out_root, "data", task_id_str)
     ensure_dir_fs(data_dir)
-
-    # Skip existing check
-    if skip_existing and all_outputs_exist(final_out_root, task_index, episode_id):
-        print(f"[skip_existing] episode {episode_id:08d} ({rel})", flush=True)
-        return ("skipped_existing", episode_id, rel)
 
     # Load state/action
     try:
@@ -292,10 +286,13 @@ def process_job(
     except Exception as e:
         print(f"[error_load] {rel} -> {e}", flush=True)
         return ("error", episode_id, rel)
-        
+
     # Trim off the first TRIM_FRAMES frames
     if state.shape[0] <= TRIM_FRAMES:
-        print(f"[skip_too_short] episode {episode_id:08d} ({rel}) length={state.shape[0]} <= trim={TRIM_FRAMES}", flush=True)
+        print(
+            f"[skip_too_short] episode {episode_id:08d} ({rel}) length={state.shape[0]} <= trim={TRIM_FRAMES}",
+            flush=True,
+        )
         return ("skip_too_short", episode_id, rel)
     state = state[TRIM_FRAMES:, :]
     action = action[TRIM_FRAMES:, :]
@@ -324,13 +321,14 @@ def main():
     parser.add_argument("--input-root", required=True, help="Rollouts root (local directory)")
     parser.add_argument("--output-root", required=True, help="Output dataset root (local directory)")
     parser.add_argument("--jsonl", required=True, help="JSONL produced by generate_rft_index.py")
-    parser.add_argument("--tasks-jsonl", default="2025-challenge-demos/meta/tasks.jsonl", help="Path to tasks.jsonl")
-    parser.add_argument("--template-root", default="2025-challenge-demos", help="Existing BEHAVIOR dataset to copy meta/annotation templates from")
-    parser.add_argument("--no-skip-existing", dest="skip_existing", action="store_false", default=True, help="Do not skip existing outputs")
+    parser.add_argument("--tasks-jsonl", help="Path to tasks.jsonl")
+    parser.add_argument(
+        "--template-root",
+        default="2025-challenge-demos",
+        help="Existing BEHAVIOR dataset to copy meta/annotation templates from",
+    )
     parser.add_argument("--num-workers", type=int, default=32, help="Parallel workers (default: half of CPU cores)")
     args = parser.parse_args()
-
-    # removed easy_io.set_s3_backend
 
     tasks_jsonl_path = args.tasks_jsonl
     template_root = args.template_root
@@ -347,7 +345,7 @@ def main():
     ensure_dir_fs(final_out_root)
 
     # Build jobs list
-    jobs: List[_Dict[str, object]] = []
+    jobs: List[Dict[str, object]] = []
     with open(args.jsonl, "r") as f:
         for raw in f:
             raw = raw.strip()
@@ -373,8 +371,6 @@ def main():
         process_job,
         final_out_root=final_out_root,
         template_root=template_root,
-        task_name_to_index=task_name_to_index,
-        skip_existing=args.skip_existing,
     )
 
     # Execute in parallel
@@ -386,13 +382,10 @@ def main():
 
     # Summarize
     converted = sum(1 for s, _, _ in results if s == "converted")
-    skipped = sum(1 for s, _, _ in results if s == "skipped_existing")
-    skipped_task = sum(1 for s, _, _ in results if s == "skip_no_task")
 
     total = len(results)
-    print(f"Done. Total: {total}, converted: {converted}, skipped_existing: {skipped}, skipped_no_task: {skipped_task}. Output at {final_out_root}")
+    print(f"Done. Total: {total}, converted: {converted}. Output at {final_out_root}")
 
 
 if __name__ == "__main__":
     main()
-

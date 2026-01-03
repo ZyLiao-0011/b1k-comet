@@ -205,7 +205,7 @@ class Evaluator:
         """
         return [AgentMetric(self.human_stats), TaskMetric(self.human_stats)]
 
-    def step(self) -> tuple[bool, bool]:
+    def step(self) -> tuple[bool, bool, dict]:
         """
         Performs a single step of the task by executing the policy, interacting with the environment,
         processing observations, updating metrics, and tracking trial success.
@@ -235,11 +235,10 @@ class Evaluator:
 
         if terminated or truncated:
             self.n_trials += 1
-            self.success_callback(info["done"]["success"])
 
         for metric in self.metrics:
             metric.step_callback(self.env)
-        return terminated, truncated
+        return terminated, truncated, info
 
     @property
     def video_writer(self) -> tuple[Container, Stream]:
@@ -624,7 +623,7 @@ if __name__ == "__main__":
 
                 while not done:
                     time_start = time.time()
-                    terminated, truncated = evaluator.step()
+                    terminated, truncated, info = evaluator.step()
                     time_step = time.time() - time_start
 
                     if time_step > 15 * 60:
@@ -639,6 +638,10 @@ if __name__ == "__main__":
                         evaluator._write_video()
                     if evaluator.env._current_step % 1000 == 0:
                         logger.info(f"Current step: {evaluator.env._current_step}")
+
+                    # callback for end of episode
+                    if terminated or truncated:
+                        evaluator.success_callback(info["done"]["success"])
 
                 # run metric end callbacks
                 for metric in evaluator.metrics:

@@ -34,7 +34,10 @@
 > [!TIP]
 > OpenPi Comet is the submission of Team Comet for the [2025 BEHAVIOR Challenge](https://behavior.stanford.edu/index.html). This repository provides a unified framework for pre-training, post-training, data generation and evaluation of π0.5 (Pi05) models on BEHAVIOR-1K.
 
-Our [[submission]](https://behavior.stanford.edu/challenge/leaderboard.html#privileged-information-track) achieved a Q-score of 0.2514, securing 2nd place overall and finishing just behind the winning team by a narrow margin—highlighting both the strong competitiveness of our approach and the effectiveness of our end-to-end VLA training strategy. 
+Our [[submission]](https://behavior.stanford.edu/challenge/leaderboard.html#privileged-information-track) achieved a Q-score of **0.2514 (Held-out Test)**, securing 2nd place overall and finishing behind the winning team by a narrow margin—highlighting both the strong competitiveness of our approach and the effectiveness of our end-to-end VLA training strategy. 
+
+**🏆 Post-Challenge Update.**  
+Building upon our **competition submission**, we further refined the training strategy, leading to a significantly higher **Q-score of 0.345 on the Public Validation set** using only [two pretrained models](#model-zoo).
 
 <p align="center">
   <img src="docs/leaderboard.png" width="80%">
@@ -42,11 +45,12 @@ Our [[submission]](https://behavior.stanford.edu/challenge/leaderboard.html#priv
 
 
 This codebase contains:
-1. Distributed OpenPi training infrastructure
+1. Distributed OpenPi training infrastructure, Support Multi-datasets Sharding.
 2. Various pre-training setup, including hierarchical instructions (global, subtask, skill) and multimodal observations (RGB, depth, point cloud, segmentation, bounding boxes, human pointing)
 3. Post-training via Rejection Sampling Fine-Tuning (RFT) with automated dataset construction
 4. Data generation scripts such as teleoperation and simulation rollouts using existing policy
-5. Model zoo of pretrained VLA checkpoints trained on 1M+ robot interactions
+5. Native OpenPi compatibility, SOTA performance with minimal modifications (can be directly loaded by official OpenPi)
+
 
 Please check our [[Report]](https://arxiv.org/abs/2512.10071) for more details.
 
@@ -57,8 +61,8 @@ Please check our [[Report]](https://arxiv.org/abs/2512.10071) for more details.
 
 ## Updates
 
-- [Dec 6, 2025] Released the full submission codebase and pre-trained weights.
-- [TODO] Upload our RFT dataset.
+- [Dec 06, 2025] Released the full submission codebase and pre-trained weights.
+- [Jan 03, 2026] Release our [latest pretrained models](#model-zoo) with **Q Score of 0.345** (Public Validation), Upload our RFT dataset: [comet-1.5k 🤗](https://huggingface.co/datasets/delinqu/comet-1.5k), Support Multi-dataset Loading and Sharding.
 
 
 ## Requirements
@@ -98,56 +102,23 @@ uv pip install -e bddl
 uv pip install -e OmniGibson[eval]
 ```
 
-## Model Zoo 🤗
+## Model Zoo
 
-We provide a suite of base VLA model checkpoints trained on 1M+ robot trajectories, ideal for BEHAVIOR-1K fine-tuning.
+We provide a suite of base VLA model checkpoints trained on 1.5K hours robot trajectories, ideal for BEHAVIOR-1K fine-tuning.
 
 |   Model Name | Discription                          | HuggingFace URL                                                                                                                                                                                                                                          |
 |----------:|:----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | pi05-b1kpt12-cs32 | Pretrained Model in tasks `0,1,6,17,18,22,30,32,34,35,40,45` with action chunk size 32                         | [openpi_comet/pi05-b1kpt12-cs32](https://huggingface.co/sunshk/openpi_comet/tree/main/pi05-b1kpt12-cs32)                                                                  |
 | pi05-b1kpt50-cs32 | Pretrained Model in tasks `0-49` with action chunk size 32                                                     | [openpi_comet/pi05-b1kpt50-cs32](https://huggingface.co/sunshk/openpi_comet/tree/main/pi05-b1kpt50-cs32)                                                                  |
 
-<details>
-<summary>Full Model Zoo (Per Task)</summary>
-
-| Model        | Use Case    | Task ID | Task Name                                                                                                 | HF URL                                |
-| ------------ | ----------- | --- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------|
-| pi05-turning_on_radio-sft | SFT | 0 | turning_on_radio | [pi05-turning_on_radio-sft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-turning_on_radio-sft.zip) |
-| pi05-pt12-pretrain-75k | Pretrain | 1 | picking_up_trash | [pi05-pt12-pretrain-75k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt12-pretrain-75k.zip) |
-| pi05-putting_away_Halloween_decorations-sft | SFT | 2 | putting_away_Halloween_decorations | [pi05-putting_away_Halloween_decorations-sft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-putting_away_Halloween_decorations-sft.zip) |
-| pi05-pt50-pretrain-40k | Pretrain | 3, 4, 7, 9, 13, 15, 18, 20, 21, 23, 24, 25, 26, 28, 29, 31, 36, 41, 44, 48, 49 | cleaning_up_plates_and_food, can_meat, picking_up_toys, putting_up_Christmas_decorations_inside, loading_the_car, bringing_in_wood, tidying_bedroom, sorting_vegetables, collecting_childrens_toys, boxing_books_up_for_storage, storing_food, clearing_food_from_table_into_fridge, assembling_gift_baskets, getting_organized_for_work, clean_up_your_desk, clean_boxing_gloves, clean_a_patio, cook_cabbage, chopping_wood, canning_food, make_pizza | [openpi_comet/pi05-b1kpt50-cs32](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-40k.zip) |
-| pi05-pt50-pretrain-20k | Pretrain | 5 | setting_mousetraps | [pi05-pt50-pretrain-20k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-20k.zip) |
-| pi05-hiding_Easter_eggs-rft | RFT | 6 | hiding_Easter_eggs | [pi05-hiding_Easter_eggs-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-hiding_Easter_eggs-rft.zip) |
-| pi05-pt50-pretrain-45k | Pretrain | 8, 42 | rearranging_kitchen_furniture, chop_an_onion | [pi05-pt50-pretrain-45k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-45k.zip) |
-| pi05-set_up_a_coffee_station_in_your_kitchen-rft | RFT | 10 | set_up_a_coffee_station_in_your_kitchen | [pi05-set_up_a_coffee_station_in_your_kitchen-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-set_up_a_coffee_station_in_your_kitchen-rft.zip) |
-| pi05-putting_dishes_away_after_cleaning-rft | RFT | 11 | putting_dishes_away_after_cleaning | [pi05-putting_dishes_away_after_cleaning-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-putting_dishes_away_after_cleaning-rft.zip) |
-| pi05-preparing_lunch_box-rft | RFT | 12 | preparing_lunch_box | [pi05-preparing_lunch_box-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-preparing_lunch_box-rft.zip) |
-| pi05-pt50-pretrain-35k | Pretrain | 14, 47 | carrying_in_groceries, freeze_pies | [pi05-pt50-pretrain-35k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-35k.zip) |
-| pi05-pt10-pretrain-40k | Pretrain | 16 | moving_boxes_to_storage | [pi05-pt10-pretrain-40k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt10-pretrain-40k.zip) |
-| pi05-pt10-pretrain-45k | Pretrain | 17 | bringing_water | [pi05-pt10-pretrain-45k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt10-pretrain-45k.zip) |
-| pi05-outfit_a_basic_toolbox-rft | RFT | 19 | outfit_a_basic_toolbox | [pi05-outfit_a_basic_toolbox-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-outfit_a_basic_toolbox-rft.zip) |
-| pi05-pt12-pretrain-85k | Pretrain | 22 | putting_shoes_on_rack | [pi05-pt12-pretrain-85k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt12-pretrain-85k.zip) |
-| pi05-pt50-pretrain-15k | Pretrain | 27 | sorting_household_items | [pi05-pt50-pretrain-15k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-15k.zip) |
-| pi05-pt12-pretrain-40k | Pretrain | 30, 32 | setting_the_fire, wash_a_baseball_cap | [openpi_comet/pi05-b1kpt12-cs32](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt12-pretrain-40k.zip) |
-| pi05-wash_dog_toys-sft | SFT | 33 | wash_dog_toys | [pi05-wash_dog_toys-sft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-wash_dog_toys-sft.zip) |
-| pi05-hanging_pictures-rft | RFT | 34 | hanging_pictures | [pi05-hanging_pictures-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-hanging_pictures-rft.zip) |
-| pi05-pt12-pretrain-25k | Pretrain | 35 | attach_a_camera_to_a_tripod | [pi05-pt12-pretrain-25k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt12-pretrain-25k.zip) |
-| pi05-clean_a_trumpet-sft | SFT | 37 | clean_a_trumpet | [pi05-clean_a_trumpet-sft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-clean_a_trumpet-sft.zip) |
-| pi05-spraying_for_bugs-rft | RFT | 38 | spraying_for_bugs | [pi05-spraying_for_bugs-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-spraying_for_bugs-rft.zip) |
-| pi05-pt50-pretrain-50k | Pretrain | 39, 46 | spraying_fruit_trees, cook_bacon | [pi05-pt50-pretrain-50k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt50-pretrain-50k.zip) |
-| pi05-pt7-pretrain-50k | Pretrain | 40 | make_microwave_popcorn | [pi05-pt7-pretrain-50k](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt7-pretrain-50k.zip) |
-| pi05-slicing_vegetables-rft | RFT | 43 | slicing_vegetables | [pi05-slicing_vegetables-rft](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-slicing_vegetables-rft.zip) |
-| pi05-pt10-pretrain-40k-re | Pretrain | 45 | cook_hot_dogs | [pi05-pt10-pretrain-40k-re](https://huggingface.co/sunshk/comet_weights/blob/main/pi05-pt10-pretrain-40k-re.zip) |
-
-
-</details>
-
 ### Finetune OpenPi
 
-Each time we launch the training, we need to compute the normalization statistics for the training data in advance: 
+When resuming training from an existing pretrained checkpoint, we strongly recommend inheriting the normalization statistics from the pretrained model, rather than recomputing them. This ensures consistency in feature scaling and avoids distributional shifts that may destabilize training or degrade performance.
 
+You can also recompute normalization statistics when starting training from scratch:
 ```bash
-uv run scripts/compute_norm_stats.py --config-name pi05_b1k-turning_on_radio
+# Optional
+> uv run scripts/compute_norm_stats.py --config-name pi05_b1k-turning_on_radio
 ```
 
 This will create `norm_stats.json` under `assets/pi0_b1k/behavior-1k/2025-challenge-demos`, which will be used to normalize the training data.
@@ -219,7 +190,7 @@ python scripts/train_dist.py ${config_name} --exp_name=${exp_name} --overwrite
 
 To perform RFT, you need to first deploy the finetuned checkpoint, and then rollout the episodes in the BEHAVIOR-1K Simulator. We also observe that the `pose perturbator` helps improve the robustness of the RFT Algorithm. 
 
-1. Copy the files in `openpi_comet/src/behavior/learning` to `BEHAVIOR-1K/OmniGibson/omnigibson/learning`. Be careful to the latest commit of the BEHAVIOR-1K repo and replace the files in the CheckList:
+1. Copy the files in `openpi-comet/src/behavior/learning` to `BEHAVIOR-1K/OmniGibson/omnigibson/learning`. Be careful to the latest commit of the BEHAVIOR-1K repo and replace the files in the CheckList:
 
 | Name | Description |
 |-------------------------------|-------------------------------------------------------------------------------------------------------|
@@ -246,13 +217,7 @@ python OmniGibson/omnigibson/learning/eval_custom.py policy=websocket \
 where `parallel_evaluator_start_idx` and `parallel_evaluator_end_idx` are the start and end index of the parallel rollout, we can distribute the rollout to multiple GPUs by splitting the total number of instances into multiple parts.
 
 3. Build the RFT dataset:
-After the rollout, you can build the RFT dataset by running the following command:
-
-```bash
-python data_generation/rollout/create_rft_dataset.py \
-    --rollout_dir $PATH_TO_ROLLOUT_DATASET \
-    --rft_dir $PATH_TO_RFT_DATASET
-```
+After the rollout, you can build the RFT dataset by following [Data Generation README.md](data_generation/rft/README.md)
 
 Then, we can perform RFT training on the RFT dataset. Please refer to the [RFT training config](src/openpi/training/config.py) for more details.
 
@@ -267,9 +232,9 @@ After finetuning, you can run evaluation by following the steps below:
 
     uv run scripts/serve_b1k.py \
       --task_name=$TASK_NAME \
-      policy:checkpoint \
       --control_mode=receeding_horizon \
       --max_len=32 \
+      policy:checkpoint \
       --policy.config=pi05_b1k-base \
       --policy.dir=$PATH_TO_CKPT
     ```
