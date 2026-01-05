@@ -15,10 +15,16 @@
       alt="BEHAVIOR-1K Leaderboard"
     />
   </a>
-  <a href="https://huggingface.co/sunshk/comet_submission">
+  <a href="https://huggingface.co/sunshk/openpi_comet">
     <img
-        src="https://img.shields.io/badge/Comet--Submission-HuggingFace-green?logo=huggingface&logoColor=brightyellow"
-        alt="Comet Submission"
+        src="https://img.shields.io/badge/Model-HuggingFace-green?logo=huggingface&logoColor=brightyellow"
+        alt="Model"
+    />
+  </a>
+  <a href="https://huggingface.co/datasets/delinqu/comet-1.5k">
+    <img
+        src="https://img.shields.io/badge/Data-HuggingFace-green?logo=huggingface&logoColor=brightyellow"
+        alt="Data"
     />
   </a>
   <a href="https://arxiv.org/abs/2512.10071">
